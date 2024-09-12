@@ -33,10 +33,22 @@ async function run() {
         // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
         // Send a ping to confirm a successful connection
-        const database = client.db("bus-ticket-pro");
-        const busDetails = database.collection("bus-details");
-        const order = database.collection("order");
-        const routes_way = database.collection("routes");
+        const database = client.db("device-master");
+        const services = database.collection("services");
+        // const order = database.collection("order");
+        // const routes_way = database.collection("routes");
+
+        app.get("/services", async (req, res) => {
+            try {
+                const result = await services.find().toArray();
+                res.send(result);
+            } catch(error){
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
+   
+
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
