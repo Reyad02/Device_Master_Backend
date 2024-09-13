@@ -35,6 +35,7 @@ async function run() {
         // Send a ping to confirm a successful connection
         const database = client.db("device-master");
         const services = database.collection("services");
+        const orders = database.collection("orders");
         // const order = database.collection("order");
         // const routes_way = database.collection("routes");
 
@@ -42,12 +43,35 @@ async function run() {
             try {
                 const result = await services.find().toArray();
                 res.send(result);
-            } catch(error){
+            } catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Error fetching services" });
             }
         })
-   
+
+        app.get("/service/:id", async (req, res) => {
+            const id = req.params.id;
+            try {
+                const result = await services.findOne({ _id: new ObjectId(id) });
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
+
+        app.post("/order", async (req, res) => {
+            try {
+                const { name, email, phone, price, message, paymentStatus } = req.body;
+                const result = await orders.insertOne({ name, email, phone, price, message, paymentStatus });
+                res.send(result);
+            }
+            catch (error) {
+                console.log(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
+
 
 
         await client.db("admin").command({ ping: 1 });
