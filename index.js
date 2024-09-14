@@ -30,13 +30,11 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
         await client.connect();
-        // Send a ping to confirm a successful connection
         const database = client.db("device-master");
         const services = database.collection("services");
         const orders = database.collection("orders");
-        // const order = database.collection("order");
+        const blogs = database.collection("blogs");
         // const routes_way = database.collection("routes");
 
         app.get("/services", async (req, res) => {
@@ -72,14 +70,33 @@ async function run() {
             }
         })
 
+        app.get("/blogs/:items/:page", async (req, res) => {
+            const items = parseInt(req.params.items) 
+            const page = parseInt(req.params.page) 
+            try {
+                const totalCount = await blogs.countDocuments();
+                const result = await blogs.find().skip((page-1)*items).limit(items).toArray();
+                res.send({result, totalCount});
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
 
+        app.get("/blogs/:id", async (req, res) => {
+            const id = req.params.id;
+            try {
+                const result = await blogs.findOne({ _id: new ObjectId(id) });
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
 
         await client.db("admin").command({ ping: 1 });
         console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensures that the client will close when you finish/error
-        // await client.close();
-    }
+    } finally { }
 }
 run().catch(console.dir);
 
@@ -89,5 +106,5 @@ app.get('/', (req, res) => {
 })
 
 app.listen(port, () => {
-    // console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on port ${port}`)
 })
