@@ -71,12 +71,12 @@ async function run() {
         })
 
         app.get("/blogs/:items/:page", async (req, res) => {
-            const items = parseInt(req.params.items) 
-            const page = parseInt(req.params.page) 
+            const items = parseInt(req.params.items)
+            const page = parseInt(req.params.page)
             try {
                 const totalCount = await blogs.countDocuments();
-                const result = await blogs.find().skip((page-1)*items).limit(items).toArray();
-                res.send({result, totalCount});
+                const result = await blogs.find().skip((page - 1) * items).limit(items).toArray();
+                res.send({ result, totalCount });
             } catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Error fetching services" });
@@ -87,6 +87,31 @@ async function run() {
             const id = req.params.id;
             try {
                 const result = await blogs.findOne({ _id: new ObjectId(id) });
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
+
+        app.put("/blog/:id", async (req, res) => {
+            const id = req.params.id;
+            const { username, email, comment, date } = req.body;
+            try {
+                const filter = { _id: new ObjectId(id) };
+                const newComment = {
+                    username: username,
+                    email: email,
+                    comment: comment,
+                    date: date
+                };
+                const update = {
+                    $push: {
+                        comments: newComment
+                    }
+                }
+
+                const result = await blogs.updateOne(filter, update);
                 res.send(result);
             } catch (error) {
                 console.error(error);
