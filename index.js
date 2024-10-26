@@ -7,6 +7,8 @@ const port = process.env.PORT || 3000
 // const jwt = require('jsonwebtoken');
 // const SSLCommerzPayment = require('sslcommerz-lts')
 
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+
 app.use(express.json());
 app.use(cors({
     origin: ['https://bus-ticket-pro.web.app', 'https://bus-ticket-pro.firebaseapp.com', 'http://localhost:5173']
@@ -60,15 +62,59 @@ async function run() {
 
         app.post("/order", async (req, res) => {
             try {
-                const { name, email, phone, price, message, paymentStatus } = req.body;
-                const result = await orders.insertOne({ name, email, phone, price, message, paymentStatus });
-                res.send(result);
-            }
-            catch (error) {
+                const { name, email, phone, price, message, paymentStatus, service_name } = req.body;
+                
+                const result = await orders.insertOne({ name, email, phone, price, message, paymentStatus, service_name });
+                const orderId = result.insertedId; 
+        
+                const session = await stripe.checkout.sessions.create({
+                    payment_method_types: ["card"],
+                    success_url: `http://localhost:5173/success/${orderId}`, 
+                    cancel_url: 'http://localhost:5173/cancel',
+                    line_items: [
+                        {
+                            price_data: {
+                                currency: 'usd', 
+                                product_data: {
+                                    name: service_name 
+                                },
+                                unit_amount: parseInt(price.replace('$', '')) * 100, 
+                            },
+                            quantity: 1,
+                        },
+                    ],
+                    mode: 'payment',
+                });
+        
+                res.json({ id: session.id });
+            } catch (error) {
                 console.log(error);
-                res.status(500).send({ message: "Error fetching services" });
+                res.status(500).send({ message: "Error processing order" });
             }
-        })
+        });
+        
+
+        app.put("/payment/:id", async (req, res) => {
+            const { id } = req.params;
+            const { paymentStatus } = req.body; 
+        
+            try {
+                const result = await orders.updateOne(
+                    { _id: new ObjectId(id) }, 
+                    { $set: { paymentStatus: paymentStatus } }
+                );
+        
+                if (result.modifiedCount > 0) {
+                    res.status(200).send({ message: "Payment status updated successfully" });
+                } else {
+                    res.status(404).send({ message: "Order not found" });
+                }
+            } catch (error) {
+                console.error("Error updating payment status:", error);
+                res.status(500).send({ message: "Error updating payment status" });
+            }
+        });
+        
 
         app.get("/blogs/:items/:page", async (req, res) => {
             const items = parseInt(req.params.items)
