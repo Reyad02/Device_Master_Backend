@@ -63,47 +63,47 @@ async function run() {
         app.post("/order", async (req, res) => {
             try {
                 const { name, email, phone, price, message, paymentStatus, service_name } = req.body;
-                
+
                 const result = await orders.insertOne({ name, email, phone, price, message, paymentStatus, service_name });
-                const orderId = result.insertedId; 
-        
+                const orderId = result.insertedId;
+
                 const session = await stripe.checkout.sessions.create({
                     payment_method_types: ["card"],
-                    success_url: `http://localhost:5173/success/${orderId}`, 
+                    success_url: `http://localhost:5173/success/${orderId}`,
                     cancel_url: 'http://localhost:5173/cancel',
                     line_items: [
                         {
                             price_data: {
-                                currency: 'usd', 
+                                currency: 'usd',
                                 product_data: {
-                                    name: service_name 
+                                    name: service_name
                                 },
-                                unit_amount: parseInt(price.replace('$', '')) * 100, 
+                                unit_amount: parseInt(price.replace('$', '')) * 100,
                             },
                             quantity: 1,
                         },
                     ],
                     mode: 'payment',
                 });
-        
+
                 res.json({ id: session.id });
             } catch (error) {
                 console.log(error);
                 res.status(500).send({ message: "Error processing order" });
             }
         });
-        
+
 
         app.put("/payment/:id", async (req, res) => {
             const { id } = req.params;
-            const { paymentStatus } = req.body; 
-        
+            const { paymentStatus } = req.body;
+
             try {
                 const result = await orders.updateOne(
-                    { _id: new ObjectId(id) }, 
+                    { _id: new ObjectId(id) },
                     { $set: { paymentStatus: paymentStatus } }
                 );
-        
+
                 if (result.modifiedCount > 0) {
                     res.status(200).send({ message: "Payment status updated successfully" });
                 } else {
@@ -114,7 +114,7 @@ async function run() {
                 res.status(500).send({ message: "Error updating payment status" });
             }
         });
-        
+
 
         app.get("/blogs/:items/:page", async (req, res) => {
             const items = parseInt(req.params.items)
@@ -158,6 +158,16 @@ async function run() {
                 }
 
                 const result = await blogs.updateOne(filter, update);
+                res.send(result);
+            } catch (error) {
+                console.error(error);
+                res.status(500).send({ message: "Error fetching services" });
+            }
+        })
+
+        app.get("/order", async (req, res) => {
+            try {
+                const result = await orders.find({paymentStatus: true}).toArray();
                 res.send(result);
             } catch (error) {
                 console.error(error);
