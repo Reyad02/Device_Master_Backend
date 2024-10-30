@@ -167,12 +167,24 @@ async function run() {
 
         app.get("/order", async (req, res) => {
             try {
-                const result = await orders.find({paymentStatus: true}).toArray();
+                const result = await orders.find({ paymentStatus: true }).toArray();
                 res.send(result);
             } catch (error) {
                 console.error(error);
                 res.status(500).send({ message: "Error fetching services" });
             }
+        })
+
+        app.post("/add_Service", async (req, res) => {
+            const { serviceName, price, description, imgURL } = req.body;
+            const doc = {
+                service_name: serviceName,
+                description: description,
+                price: price,
+                service_img: imgURL
+            }
+            const result = await services.insertOne(doc);
+            res.send(result);
         })
 
         await client.db("admin").command({ ping: 1 });
