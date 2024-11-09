@@ -143,6 +143,7 @@ async function run() {
         app.put("/blog/:id", async (req, res) => {
             const id = req.params.id;
             const { username, email, comment, date } = req.body;
+            const options = { upsert: true };
             try {
                 const filter = { _id: new ObjectId(id) };
                 const newComment = {
@@ -157,7 +158,7 @@ async function run() {
                     }
                 }
 
-                const result = await blogs.updateOne(filter, update);
+                const result = await blogs.updateOne(filter, update, options);
                 res.send(result);
             } catch (error) {
                 console.error(error);
@@ -184,6 +185,20 @@ async function run() {
                 service_img: imgURL
             }
             const result = await services.insertOne(doc);
+            res.send(result);
+        })
+
+        app.post("/add_blogs", async (req, res) => {
+            const { title, description, tagsArray, imgURL } = req.body;
+            const dateObj = new Date();
+            const doc = {
+                title: title,
+                description: description,
+                tags: tagsArray,
+                img: imgURL,
+                postDate: dateObj
+            }
+            const result = await blogs.insertOne(doc);
             res.send(result);
         })
 
