@@ -11,7 +11,7 @@ const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 
 app.use(express.json());
 app.use(cors({
-    origin: ['https://bus-ticket-pro.web.app', 'https://bus-ticket-pro.firebaseapp.com', 'http://localhost:5173']
+    origin: ['https://device-master-2614d.web.app', 'https://device-master-2614d.firebaseapp.com']
 }));
 
 // const store_id = process.env.STORE_ID;
@@ -32,7 +32,7 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        await client.connect();
+        // await client.connect();
         const database = client.db("device-master");
         const services = database.collection("services");
         const orders = database.collection("orders");
@@ -202,8 +202,8 @@ async function run() {
             res.send(result);
         })
 
-        await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+        // await client.db("admin").command({ ping: 1 });
+        // console.log("Pinged your deployment. You successfully connected to MongoDB!");
     } finally { }
 }
 run().catch(console.dir);
